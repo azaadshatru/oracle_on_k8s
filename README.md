@@ -47,7 +47,14 @@ $ helm uninstall my-nfs-client
 ```
 $ mkdir -p ~/oracle
 $ cd ~/oracle
-$ git clone 
+$ git clone https://github.com/azaadshatru/oracle_on_k8s.git
+Cloning into 'oracle_on_k8s'...
+remote: Enumerating objects: 25, done.
+remote: Counting objects: 100% (25/25), done.
+remote: Compressing objects: 100% (21/21), done.
+remote: Total 25 (delta 5), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (25/25), done.
+$ cd oracle_on_k8s
 $ kubectl create namespace oracle-namespace --save-config
 namespace/oracle-namespace created
 $ kubectl config set-context --current --namespace=oracle-namespace
@@ -68,6 +75,11 @@ $ kubectl get secret -n oracle-namespace
 NAME                  TYPE                                  DATA   AGE
 default-token-qxvkn   kubernetes.io/service-account-token   3      20h
 regcred               kubernetes.io/dockerconfigjson        1      10s
+```
+
+You can edit oracle.properties file as per your requirement
+
+```
 $ kubectl create configmap oradb --from-env-file=oracle.properties -n oracle-namespace
 configmap/oradb created
 ```
