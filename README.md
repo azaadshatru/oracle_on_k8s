@@ -43,62 +43,6 @@ In case you want to remove nfs-client storage class
 ----------------------------------------------------
 # helm uninstall my-nfs-client
 
-Downloading Oracle Express Free DB Docker Image and pushing it back to JFrog Registry
-======================================================================================
-
-https://container-registry.oracle.com/ords/f?p=113:4:8616656688065:::4:P4_REPOSITORY,AI_REPOSITORY,AI_REPOSITORY_NAME,P4_REPOSITORY_NAME,P4_EULA_ID,P4_BUSINESS_AREA_ID:803,803,Oracle%20Database%20Express%20Edition,Oracle%20Database%20Express%20Edition,1,0&cs=3Gxs30BnSN5rR2IZvMWe4dl221cJMOumiTa8o0SmIlXAmjs6dLugpRPwvqPQMCVEftHS2CfZCYyn4m_iJKaIlVw
-
-[sas@mumcnslnx01 oracle]$ sudo docker pull container-registry.oracle.com/database/express:latest
-latest: Pulling from database/express
-35defbf6c365: Pull complete
-249027472f46: Pull complete
-67ae3dfc2d41: Pull complete
-Digest: sha256:b17a93fb201562ad142d267c0ac3eecb0e6207debafd6ed51a1da157b9cacab8
-Status: Downloaded newer image for container-registry.oracle.com/database/express:latest
-[sas@mumcnslnx01 oracle]$ sudo docker images
-REPOSITORY                                       TAG                               IMAGE ID            CREATED             SIZE
-calico/node                                      v3.19.1                           c4d75af7e098        2 months ago        168MB
-calico/pod2daemon-flexvol                        v3.19.1                           5660150975fb        2 months ago        21.7MB
-calico/cni                                       v3.19.1                           5749e8b276f9        2 months ago        146MB
-fluent/fluent-bit                                1.5                               12d3231b5b93        10 months ago       77.6MB
-k8s.gcr.io/kube-proxy                            v1.18.8                           0fb7201f92d0        12 months ago       117MB
-k8s.gcr.io/kube-controller-manager               v1.18.8                           6a979351fe5e        12 months ago       162MB
-k8s.gcr.io/kube-apiserver                        v1.18.8                           92d040a0dca7        12 months ago       173MB
-k8s.gcr.io/kube-scheduler                        v1.18.8                           6f7135fb47e0        12 months ago       95.3MB
-container-registry.oracle.com/database/express   latest                            364598d20118        15 months ago       6.01GB
-fluent/fluent-bit                                1.3.9                             80e10a139c1a        17 months ago       54.5MB
-k8s.gcr.io/pause                                 3.2                               80d28bedfe5d        18 months ago       683kB
-k8s.gcr.io/coredns                               1.6.7                             67da37a9a360        18 months ago       43.8MB
-k8s.gcr.io/etcd                                  3.4.3-0                           303ce5db0e90        22 months ago       288MB
-fluent/fluentd-kubernetes-daemonset              v1.4.2-debian-elasticsearch-1.1   06223c37c64d        2 years ago         305MB
-quay.io/coreos/flannel                           v0.11.0-amd64                     ff281650a721        2 years ago         52.6MB
-[sas@mumcnslnx01 oracle]$ sudo docker login mumcnslnx02.in.sas.com:8443/oraclexp
-Username: shatru
-Password:
-WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
-Configure a credential helper to remove this warning. See
-https://docs.docker.com/engine/reference/commandline/login/#credentials-store
-
-Login Succeeded
-[sas@mumcnslnx01 oracle]$ sudo docker tag container-registry.oracle.com/database/express:latest mumcnslnx02.in.sas.com:8443/oraclexp/express:18.4.0.0
-[sas@mumcnslnx01 oracle]$ sudo docker push mumcnslnx02.in.sas.com:8443/oraclexp/express:18.4.0.0
-The push refers to repository [mumcnslnx02.in.sas.com:8443/oraclexp/express]
-752c244c2ade: Pushing [==========>                                        ]  1.293GB/5.888GB
-31b332dfd953: Pushed
-c4a7cf6a6169: Pushed
-[sas@mumcnslnx01 oracle]$ sudo docker push mumcnslnx02.in.sas.com:8443/oraclexp/express:18.4.0.0
-The push refers to repository [mumcnslnx02.in.sas.com:8443/oraclexp/express]
-752c244c2ade: Pushing [=============================================>     ]    5.3GB/5.888GB
-31b332dfd953: Pushed
-c4a7cf6a6169: Pushed
-[sas@mumcnslnx01 oracle]$ sudo docker push mumcnslnx02.in.sas.com:8443/oraclexp/express:18.4.0.0
-The push refers to repository [mumcnslnx02.in.sas.com:8443/oraclexp/express]
-752c244c2ade: Pushed
-31b332dfd953: Pushed
-c4a7cf6a6169: Pushed
-18.4.0.0: digest: sha256:b17a93fb201562ad142d267c0ac3eecb0e6207debafd6ed51a1da157b9cacab8 size: 951
-[sas@mumcnslnx01 oracle]$
-
 Installing Oracle On Kubernetes
 ================================
 
@@ -146,7 +90,7 @@ By using the command above, we can see that our Oracle listener (1521) is availa
 NAME                         READY   STATUS    RESTARTS   AGE
 oracle18xe-c89b5d998-7lcmg   1/1     Running   0          5m44s
 
-  # kubectl -n oracle-namespace logs -f oracle18xe-c89b5d998-7lcmg
+# kubectl -n oracle-namespace logs -f oracle18xe-c89b5d998-7lcmg
 ORACLE PASSWORD FOR SYS AND SYSTEM: OracDB#2168
 Specify a password to be used for database accounts. Oracle recommends that the password entered should be at least 8 characters in length, contain at least 1 uppercase character, 1 lower case character and 1 digit [0-9]. Note that the same password will be used for SYS, SYSTEM and PDBADMIN accounts:
 Confirm the password:
