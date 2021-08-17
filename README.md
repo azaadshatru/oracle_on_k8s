@@ -1,96 +1,108 @@
 # Oracle Express Edition on Open Source Kubernetes Cluster (k8s)
-Installing Oracle Express 18.4.0.0 on K8s cluster
 
-Install nfs-client storage class
-=================================
+### Installing Oracle Express 18.4.0.0 on K8s cluster
 
-Set nfs server
----------------
+## Install nfs-client storage class
+
+### Set nfs server - My NFS Details
+```
 nfs host = lab1.example.com
 nfs path = /nfs/oracle
-
-nfs server
------------
-# vi /etc/exports
-# /nfs/oracle     *(rw,sync,no_root_squash,insecure)
-# systemctl restart nfs-server.service
-
-nfs client - on all Kube Nodes
--------------------------------
-# mkdir -p /nfs/oracle
-# vi /etc/fstab
+```
+### On nfs server
+```
+$ vi /etc/exports
+/nfs/oracle     *(rw,sync,no_root_squash,insecure)
+$ systemctl restart nfs-server.service
+```
+### nfs client - Do this on all Kube Nodes
+```
+$ mkdir -p /nfs/oracle
+$ vi /etc/fstab
 lab1.example.com:/nfs/oracle   /nfs/oracle       nfs defaults 0 0
 showmount -e lab1.example.com
-# mount -a
-
-**Install Storage Class using helm charts**
-
-# helm repo add stable https://charts.helm.sh/stable
-# helm repo update
-# helm install my-nfs-client stable/nfs-client-provisioner --namespace nfs-client --set nfs.server=lab1.example.com --set nfs.path=/nfs/oracle
-# kubectl get storageclass
+$ mount -a
+```
+## Install Storage Class using helm charts
+```
+$ helm repo add stable https://charts.helm.sh/stable
+$ helm repo update
+$ helm install my-nfs-client stable/nfs-client-provisioner --namespace nfs-client --set nfs.server=lab1.example.com --set nfs.path=/nfs/oracle
+$ kubectl get storageclass
 NAME         PROVISIONER                                       RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
 nfs-client   cluster.local/nfs-client-provisioner-1626944060   Delete          Immediate           true                   2m13s
-
-Make Storage Class Default
---------------------------
-# kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-# kubectl get sc
+```
+### Make Storage Class Default
+```
+$ kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+$ kubectl get sc
 NAME                   PROVISIONER                                          RECLAIMPOLICY   VOLUMEBINDINGMODE   ALLOWVOLUMEEXPANSION   AGE
 nfs-client (default)   cluster.local/my-nfs-client-nfs-client-provisioner   Delete          Immediate           true                   5d7h
+```
+### In case you want to remove nfs-client storage class
+```
+$ helm uninstall my-nfs-client
+```
+## Installing Oracle On Kubernetes
+```
+$ mkdir -p ~/oracle
+$ cd ~/oracle
+$ git clone 
+$ kubectl create namespace oracle-namespace --save-config
+namespace/oracle-namespace created
+$ kubectl config set-context --current --namespace=oracle-namespace
+Context "kubernetes-admin@kubernetes" modified.
+$ sudo docker login container-registry.oracle.com
+Username: your oracle portal userid 
+Password: password
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
 
-In case you want to remove nfs-client storage class
-----------------------------------------------------
-# helm uninstall my-nfs-client
-
-Installing Oracle On Kubernetes
-================================
-
-# mkdir -p ~/oracle
-# cd ~/oracle
-# git clone 
-# kubectl create namespace oracle-namespace --save-config
-# kubectl config set-context --current --namespace=oracle-namespace
-# sudo docker login container-registry.oracle.com
-# kubectl -n oracle-namespace create secret generic regcred \
+Login Succeeded
+$ kubectl -n oracle-namespace create secret generic regcred \
   --from-file=.dockerconfigjson=$HOME/.docker/config.json \
   --type=kubernetes.io/dockerconfigjson
-
-# kubectl get secret -n oracle-namespace
 secret/regcred created
-
-# kubectl get secret -n oracle-namespace
+$ kubectl get secret -n oracle-namespace
 NAME                  TYPE                                  DATA   AGE
 default-token-qxvkn   kubernetes.io/service-account-token   3      20h
 regcred               kubernetes.io/dockerconfigjson        1      10s
-
-# kubectl create configmap oradb --from-env-file=oracle.properties -n oracle-namespace
+$ kubectl create configmap oradb --from-env-file=oracle.properties -n oracle-namespace
 configmap/oradb created
+```
 
-# kubectl apply -f 18xe_deployment_nfs-client.yaml -n oracle-namespace
+Apply the 18xe_deployment_nfs-client.yaml file. You need to edit this file as per your environment's requirement before applying.
+
+```
+$ kubectl apply -f 18xe_deployment_nfs-client.yaml -n oracle-namespace
 deployment.apps/oracle18xe created
 persistentvolumeclaim/ora-data184-claim created
 persistentvolumeclaim/ora-setup184-claim created
 persistentvolumeclaim/ora-startup184-claim created
 service/oracle18xe created
-
-# kubectl get pvc -n oracle-namespace
+$ kubectl get pvc -n oracle-namespace
 NAME                   STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
 ora-data184-claim      Bound    pvc-0decaa1f-8d37-43c5-b906-7988e1567bb9   10Gi       RWO            nfs-client     11m
 ora-setup184-claim     Bound    pvc-7447bd71-22fd-466b-96d4-7695619e56fd   1Gi        RWO            nfs-client     11m
 ora-startup184-claim   Bound    pvc-fcbe3d8c-8d98-4bf6-8443-61ef473aaa3e   1Gi        RWO            nfs-client     11m
-
-# kubectl get svc -n oracle-namespace
+$ kubectl get svc -n oracle-namespace
 NAME         TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
 oracle18xe   NodePort   10.105.239.154   <none>        1521:19419/TCP,5500:30944/TCP   11m
+```
 
 By using the command above, we can see that our Oracle listener (1521) is available externally on Port 19419 and Enterprise Manager (5500) is available on 30944.
 
-# kubectl get pods -n oracle-namespace
+```
+$ kubectl get pods -n oracle-namespace
 NAME                         READY   STATUS    RESTARTS   AGE
 oracle18xe-c89b5d998-7lcmg   1/1     Running   0          5m44s
+```
+The above command is going to take some time as it will download almost 6 GB of oracle ee image.
 
-# kubectl -n oracle-namespace logs -f oracle18xe-c89b5d998-7lcmg
+You can have a look at the logs to know when DB is ready or if there are any errors.
+```
+$ kubectl -n oracle-namespace logs -f $(kubectl get pods -n oracle-namespace | grep oracle18xe | sed -n 1p | awk '{print $1}')
 ORACLE PASSWORD FOR SYS AND SYSTEM: OracDB#2168
 Specify a password to be used for database accounts. Oracle recommends that the password entered should be at least 8 characters in length, contain at least 1 uppercase character, 1 lower case character and 1 digit [0-9]. Note that the same password will be used for SYS, SYSTEM and PDBADMIN accounts:
 Confirm the password:
@@ -151,6 +163,27 @@ XEPDB1(3):Completed: ALTER DATABASE DEFAULT TABLESPACE "USERS"
 ALTER PLUGGABLE DATABASE XEPDB1 SAVE STATE
 Completed: ALTER PLUGGABLE DATABASE XEPDB1 SAVE STATE
 2021-08-17T08:04:36.147161+00:00
-XEPDB1(3):Resize operation completed for file# 10, old size 358400K, new size 3                                                                                                          78880K
+XEPDB1(3):Resize operation completed for file$ 10, old size 358400K, new size 378880K
+```
 
-# select instance_name, host_name, to_char(startup_time,'dd/mm/yy hh24:mi:ss') as Startup, status from v$instance;
+Use any sql client to connect to DB. I used the sqldeveloper on my dekstop.
+```
+DB IP: Your Kube Controller Master Node's IP
+DB: XE
+SID: XE
+Userid: sys as sysdba
+Password: OracDB#2168
+Port: Run the following command and choose the port listed long with port 1521
+
+kubectl get svc -n oracle-namespace
+NAME         TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)                         AGE
+oracle18xe   NodePort   10.105.239.154   <none>        1521:19419/TCP,5500:30944/TCP   5h15m
+```
+![image](https://user-images.githubusercontent.com/52036566/129728439-c3e4bf91-db3f-4a75-92e8-b6e4d9386f0a.png)
+
+Once connected successfully, you can run the following query to know more about your DB
+```
+$ select instance_name, host_name, to_char(startup_time,'dd/mm/yy hh24:mi:ss') as Startup, status from v$instance;
+```
+
+![image](https://user-images.githubusercontent.com/52036566/129728652-8c098c02-51a0-42a2-bbfb-b4cec6b71a19.png)
